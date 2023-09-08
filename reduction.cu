@@ -82,6 +82,8 @@ auto step_2(thrust::device_vector<int> &xs_) {
     step_2_kernel<<<block_size, CUDA_THREAD_SIZE>>>(xs_.data().get(), std::size(xs_), ys_.data().get());
 
     if (block_size == 1) {
+      cudaDeviceSynchronize();
+
       return thrust::host_vector<int>{ys_}[0];
     }
 
@@ -121,6 +123,8 @@ auto step_3(thrust::device_vector<int> &xs_) {
     step_3_kernel<<<block_size, CUDA_THREAD_SIZE, sizeof(int) * CUDA_THREAD_SIZE>>>(xs_.data().get(), std::size(xs_), ys_.data().get());
 
     if (block_size == 1) {
+      cudaDeviceSynchronize();
+
       return thrust::host_vector<int>{ys_}[0];
     }
 
@@ -161,6 +165,8 @@ auto step_4(thrust::device_vector<int> &xs_) {
     step_4_kernel<<<block_size, CUDA_THREAD_SIZE, sizeof(int) * CUDA_THREAD_SIZE>>>(xs_.data().get(), std::size(xs_), ys_.data().get());
 
     if (block_size == 1) {
+      cudaDeviceSynchronize();
+
       return thrust::host_vector<int>{ys_}[0];
     }
 
@@ -200,6 +206,8 @@ auto step_5(thrust::device_vector<int> &xs_) {
     step_5_kernel<<<block_size, CUDA_THREAD_SIZE, sizeof(int) * CUDA_THREAD_SIZE>>>(xs_.data().get(), std::size(xs_), ys_.data().get());
 
     if (block_size == 1) {
+      cudaDeviceSynchronize();
+
       return thrust::host_vector<int>{ys_}[0];
     }
 
@@ -239,6 +247,8 @@ auto step_6(thrust::device_vector<int> &xs_) {
     step_6_kernel<<<block_size, CUDA_THREAD_SIZE, sizeof(int) * CUDA_THREAD_SIZE>>>(xs_.data().get(), std::size(xs_), ys_.data().get());
 
     if (block_size == 1) {
+      cudaDeviceSynchronize();
+
       return thrust::host_vector<int>{ys_}[0];
     }
 
