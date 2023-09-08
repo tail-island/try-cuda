@@ -132,22 +132,21 @@ auto step_3(thrust::device_vector<int> &xs_) {
   }
 }
 
-// 連続したスレッドを使用して、Warpのdivergenceを削減します。
+// Shared Memoryを使用します。
 
 __global__
 void step_4_kernel(int *xs_, int xs_size, int *ys_) {
   extern __shared__ int shared_memory[];
 
-  const auto i = blockIdx.x * blockDim.x + threadIdx.x;
+  const auto i = (blockIdx.x * blockDim.x + threadIdx.x) * 2;
   const auto group = cooperative_groups::this_thread_block();
 
-  shared_memory[threadIdx.x] = i < xs_size ? xs_[i] : 0;
+  shared_memory[threadIdx.x] = (i < xs_size ? xs_[i] : 0) + (i + 1 < xs_size ? xs_[i + 1] : 0);
   cooperative_groups::sync(group);
 
   for (auto j = 1; j < blockDim.x; j *= 2) {
-    const auto k = threadIdx.x * j * 2;
-    if (k < blockDim.x) {
-      shared_memory[k] += shared_memory[k + j];
+    if (i % (j * 2) == 0) {
+      shared_memory[threadIdx.x] += shared_memory[threadIdx.x + j];
     }
     cooperative_groups::sync(group);
   }
@@ -159,7 +158,7 @@ void step_4_kernel(int *xs_, int xs_size, int *ys_) {
 
 auto step_4(thrust::device_vector<int> &xs_) {
   for (;;) {
-    const auto block_size = (std::size(xs_) + CUDA_THREAD_SIZE - 1) / CUDA_THREAD_SIZE;
+    const auto block_size = (std::size(xs_) / 2 + CUDA_THREAD_SIZE - 1) / CUDA_THREAD_SIZE;
 
     auto ys_ = thrust::device_vector<int>(block_size);
     step_4_kernel<<<block_size, CUDA_THREAD_SIZE, sizeof(int) * CUDA_THREAD_SIZE>>>(xs_.data().get(), std::size(xs_), ys_.data().get());
@@ -173,6 +172,48 @@ auto step_4(thrust::device_vector<int> &xs_) {
     xs_ = std::move(ys_);
   }
 }
+
+// // 連続したスレッドを使用して、Warpのdivergenceを削減します。
+
+// __global__
+// void step_4_kernel(int *xs_, int xs_size, int *ys_) {
+//   extern __shared__ int shared_memory[];
+
+//   const auto i = blockIdx.x * blockDim.x + threadIdx.x;
+//   const auto group = cooperative_groups::this_thread_block();
+
+//   shared_memory[threadIdx.x] = i < xs_size ? xs_[i] : 0;
+//   cooperative_groups::sync(group);
+
+//   for (auto j = 1; j < blockDim.x; j *= 2) {
+//     const auto k = threadIdx.x * j * 2;
+//     if (k < blockDim.x) {
+//       shared_memory[k] += shared_memory[k + j];
+//     }
+//     cooperative_groups::sync(group);
+//   }
+
+//   if (threadIdx.x == 0) {
+//     ys_[blockIdx.x] = shared_memory[threadIdx.x];
+//   }
+// }
+
+// auto step_4(thrust::device_vector<int> &xs_) {
+//   for (;;) {
+//     const auto block_size = (std::size(xs_) + CUDA_THREAD_SIZE - 1) / CUDA_THREAD_SIZE;
+
+//     auto ys_ = thrust::device_vector<int>(block_size);
+//     step_4_kernel<<<block_size, CUDA_THREAD_SIZE, sizeof(int) * CUDA_THREAD_SIZE>>>(xs_.data().get(), std::size(xs_), ys_.data().get());
+
+//     if (block_size == 1) {
+//       cudaDeviceSynchronize();
+
+//       return thrust::host_vector<int>{ys_}[0];
+//     }
+
+//     xs_ = std::move(ys_);
+//   }
+// }
 
 // 連続したメモリにアクセスして、Shared Memoryのbank conflictを削減します。
 
