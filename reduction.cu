@@ -1,4 +1,3 @@
-#include <chrono>
 #include <execution>
 #include <iostream>
 #include <numeric>
@@ -32,8 +31,7 @@ auto step_0(thrust::host_vector<int> &xs) {
 
 // GPUで1並列で実行します。
 
-__global__
-void step_1_kernel(int *xs_, int xs_size) {
+__global__ void step_1_kernel(int *xs_, int xs_size) {
   for (auto i = 1; i < xs_size; ++i) {
     xs_[0] += xs_[i];
   }
@@ -49,8 +47,7 @@ auto step_1(thrust::device_vector<int> &xs_) {
 
 // 隣同士を足し合わせる形で、並列化します。
 
-__global__
-void step_2_kernel(int *xs_, int xs_size, int *ys_) {
+__global__ void step_2_kernel(int *xs_, int xs_size, int *ys_) {
   const auto i = (blockIdx.x * blockDim.x + threadIdx.x) * 2;
   const auto group = cooperative_groups::this_thread_block();
 
@@ -85,8 +82,7 @@ auto step_2(thrust::device_vector<int> &xs_) {
 
 // Shared Memoryを使用します。
 
-__global__
-void step_3_kernel(int *xs_, int xs_size, int *ys_) {
+__global__ void step_3_kernel(int *xs_, int xs_size, int *ys_) {
   extern __shared__ int shared_memory[];
 
   const auto i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -167,8 +163,7 @@ auto step_3(thrust::device_vector<int> &xs_) {
 
 // 連続したスレッドを使用して、Warpのdivergenceを削減します。
 
-__global__
-void step_4_kernel(int *xs_, int xs_size, int *ys_) {
+__global__ void step_4_kernel(int *xs_, int xs_size, int *ys_) {
   extern __shared__ int shared_memory[];
 
   const auto i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -209,8 +204,7 @@ auto step_4(thrust::device_vector<int> &xs_) {
 
 // 連続したメモリにアクセスして、Shared Memoryのbank conflictを削減します。
 
-__global__
-void step_5_kernel(int *xs_, int xs_size, int *ys_) {
+__global__ void step_5_kernel(int *xs_, int xs_size, int *ys_) {
   extern __shared__ int shared_memory[];
 
   const auto i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -250,8 +244,7 @@ auto step_5(thrust::device_vector<int> &xs_) {
 
 // 休止してしまうスレッドを削減します。
 
-__global__
-void step_6_kernel(int *xs_, int xs_size, int *ys_) {
+__global__ void step_6_kernel(int *xs_, int xs_size, int *ys_) {
   extern __shared__ int shared_memory[];
 
   const auto i = blockIdx.x * blockDim.x * 2 + threadIdx.x;
