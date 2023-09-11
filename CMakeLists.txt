@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.18)
 
 project(try-cuda LANGUAGES CXX CUDA)
 
+find_package(Eigen3      REQUIRED)
 find_package(CUDAToolkit REQUIRED)
 find_package(TBB         REQUIRED)
 find_package(Thrust      REQUIRED)
@@ -36,6 +37,10 @@ target_compile_features(pi-cpu PRIVATE
     cxx_std_23
 )
 
+target_compile_options(pi-cpu PRIVATE
+    -march=native
+)
+
 # pi-cuda
 
 add_executable(pi-cuda
@@ -56,4 +61,40 @@ target_link_libraries(pi-cuda
     CUDA::curand
     TBB::tbb
     Thrust
+)
+
+# matmul-cpu
+
+add_executable(matmul-cpu
+    matmul-cpu.cxx
+    utility.h
+)
+
+target_compile_features(matmul-cpu PRIVATE
+    cxx_std_20
+)
+
+target_compile_options(matmul-cpu PRIVATE
+    -march=native
+)
+
+target_link_libraries(matmul-cpu
+    Eigen3::Eigen
+)
+
+# matmul-cuda
+
+add_executable(matmul-cuda
+    matmul-cuda.cu
+    utility.h
+)
+
+target_compile_features(matmul-cuda PRIVATE
+    cxx_std_20
+)
+
+target_link_libraries(matmul-cuda
+    CUDA::cudart
+    CUDA::cublas
+    Eigen3::Eigen
 )
