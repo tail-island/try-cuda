@@ -12,17 +12,9 @@
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
 
-const auto CUDA_THREAD_SIZE = 512;
+#include "utility.h"
 
-template <typename T>
-auto duration_and_result(const T f) {
-  const auto starting_time = std::chrono::high_resolution_clock::now();
-
-  const auto result = f();
-
-  return std::make_tuple(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - starting_time),
-                         result);
-}
+const auto CUDA_THREAD_SIZE = 256;
 
 // CPUで1並列で実行します。
 
@@ -269,7 +261,7 @@ void step_6_kernel(int *xs_, int xs_size, int *ys_) {
   cooperative_groups::sync(group);
 
   for (auto j = blockDim.x / 2; j > 0; j >>= 1) {
-    if (threadIdx.x) {
+    if (threadIdx.x < j) {
       shared_memory[threadIdx.x] += shared_memory[threadIdx.x + j];
     }
     cooperative_groups::sync(group);

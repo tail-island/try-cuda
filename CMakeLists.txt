@@ -10,6 +10,7 @@ thrust_create_target(Thrust)
 
 add_executable(reduction
     reduction.cu
+    utility.h
 )
 
 target_compile_features(reduction PRIVATE
